@@ -1,8 +1,8 @@
 function calculateSimpleRevenue(purchase, _product) {
     if (!purchase || typeof purchase !== 'object') return 0;
-    var quantity = Number(purchase.quantity) || 0;
-    var salePrice = Number(purchase.sale_price) || 0;
-    var discountPct = Number(purchase.discount) || 0;
+    const quantity = Number(purchase.quantity) || 0;
+    const salePrice = Number(purchase.sale_price) || 0;
+    let discountPct = Number(purchase.discount) || 0;
     if (!isFinite(discountPct)) discountPct = 0;
     if (discountPct < 0) discountPct = 0;
     if (discountPct > 100) discountPct = 100;
@@ -14,7 +14,7 @@ function calculateBonusByProfit(index, total, seller) {
     if (!seller || typeof seller.profit !== 'number' || !isFinite(seller.profit)) return 0;
     if (!total || total <= 0) return 0;
 
-    var percent = 0;
+    let percent = 0;
     if (index === 0) percent = 0.15;
     else if (index === 1 || index === 2) percent = 0.10;
     else if (index === total - 1) percent = 0.0;
@@ -27,9 +27,9 @@ function analyzeSalesData(data, options) {
     if (!data || typeof data !== 'object') {
         throw new Error('Некорректные входные данные: ожидается объект с коллекциями.');
     }
-    var sellers = data.sellers;
-    var products = data.products;
-    var receipts = data.purchase_records;
+    const sellers = data.sellers;
+    const products = data.products;
+    const receipts = data.purchase_records;
     if (!Array.isArray(sellers) || sellers.length === 0) {
         throw new Error('Некорректные данные: коллекция sellers должна быть непустым массивом.');
     }
@@ -43,8 +43,8 @@ function analyzeSalesData(data, options) {
     if (!options || typeof options !== 'object') {
         throw new Error('Не переданы настройки: ожидаются функции calculateRevenue и calculateBonus.');
     }
-    var calculateRevenue = options.calculateRevenue;
-    var calculateBonus = options.calculateBonus;
+    const calculateRevenue = options.calculateRevenue;
+    const calculateBonus = options.calculateBonus;
     if (typeof calculateRevenue !== 'function') {
         throw new Error('Некорректные настройки: calculateRevenue должна быть функцией.');
     }
@@ -52,8 +52,8 @@ function analyzeSalesData(data, options) {
         throw new Error('Некорректные настройки: calculateBonus должна быть функцией.');
     }
 
-    var productIndex = {};
-    var sellerStats = sellers
+    const productIndex = {};
+    const sellerStats = sellers
         .filter(function(s) { return s && s.id; })
         .map(function(seller) {
             return {
@@ -66,39 +66,39 @@ function analyzeSalesData(data, options) {
             };
         });
 
-    var statsIndex = {};
-    for (var si = 0; si < sellerStats.length; si++) {
-        var sStat = sellerStats[si];
+    const statsIndex = {};
+    for (let si = 0; si < sellerStats.length; si++) {
+        const sStat = sellerStats[si];
         statsIndex[sStat.id] = sStat;
     }
 
-    for (var j = 0; j < products.length; j++) {
-        var p = products[j];
+    for (let j = 0; j < products.length; j++) {
+        const p = products[j];
         if (!p || !p.sku) continue;
         productIndex[p.sku] = p;
     }
 
-    for (var r = 0; r < receipts.length; r++) {
-        var receipt = receipts[r];
+    for (let r = 0; r < receipts.length; r++) {
+        const receipt = receipts[r];
         if (!receipt || !receipt.seller_id || !statsIndex[receipt.seller_id]) continue;
 
-        var stat = statsIndex[receipt.seller_id];
+        const stat = statsIndex[receipt.seller_id];
         stat.sales_count += 1;
-        var receiptAmount = isFinite(Number(receipt.total_amount)) ? Number(receipt.total_amount) : 0;
+        const receiptAmount = isFinite(Number(receipt.total_amount)) ? Number(receipt.total_amount) : 0;
         stat.revenue += receiptAmount;
 
-        var items = Array.isArray(receipt.items) ? receipt.items : [];
-        for (var k = 0; k < items.length; k++) {
-            var item = items[k];
+        const items = Array.isArray(receipt.items) ? receipt.items : [];
+        for (let k = 0; k < items.length; k++) {
+            const item = items[k];
             if (!item || !item.sku) continue;
 
-            var product = productIndex[item.sku];
-            var revenue = calculateRevenue(item, product);
+            const product = productIndex[item.sku];
+            const revenue = calculateRevenue(item, product);
 
-            var quantity = Number(item.quantity) || 0;
-            var purchasePrice = product && isFinite(Number(product.purchase_price)) ? Number(product.purchase_price) : 0;
-            var cost = purchasePrice * quantity;
-            var profitDelta = revenue - cost;
+            const quantity = Number(item.quantity) || 0;
+            const purchasePrice = product && isFinite(Number(product.purchase_price)) ? Number(product.purchase_price) : 0;
+            const cost = purchasePrice * quantity;
+            const profitDelta = revenue - cost;
             stat.profit += profitDelta;
 
             if (!stat.products_sold[item.sku]) stat.products_sold[item.sku] = 0;
@@ -106,20 +106,20 @@ function analyzeSalesData(data, options) {
         }
     }
 
-    for (var siCalc = 0; siCalc < sellerStats.length; siCalc++) {
-        var sst = sellerStats[siCalc];
+    for (let siCalc = 0; siCalc < sellerStats.length; siCalc++) {
+        const sst = sellerStats[siCalc];
         sst.profit = +Number(sst.profit || 0).toFixed(2);
     }
 
     sellerStats.sort(function(a, b) { return b.profit - a.profit; });
 
-    var total = sellerStats.length;
-    for (var si2 = 0; si2 < sellerStats.length; si2++) {
-        var sellerStat = sellerStats[si2];
+    const total = sellerStats.length;
+    for (let si2 = 0; si2 < sellerStats.length; si2++) {
+        const sellerStat = sellerStats[si2];
         sellerStat.bonus = calculateBonus(si2, total, sellerStat);
 
-        var entries = Object.entries(sellerStat.products_sold || {});
-        var topProducts = entries
+        const entries = Object.entries(sellerStat.products_sold || {});
+        const topProducts = entries
             .map(function(pair) { return { sku: pair[0], quantity: pair[1] }; })
             .sort(function(a, b) { return b.quantity - a.quantity; })
             .slice(0, 10);
